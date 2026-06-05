@@ -1,0 +1,32 @@
+mule-torch
+==========
+
+This project is a PyTorch re-implementation ("port") of the MULE model
+(SF-NFNet-F0) originally released by Pandora Media, LLC. / SiriusXM as part of:
+
+    "Supervised and Unsupervised Learning of Audio Representations for Music
+    Understanding", M. C. McCallum, F. Korzeniowski, S. Oramas, F. Gouyon,
+    A. F. Ehmann. ISMIR 2022.  https://arxiv.org/abs/2210.03799
+
+Original implementation (TensorFlow/Keras), model weights, and configurations:
+
+    https://github.com/PandoraMedia/music-audio-representations
+
+What this project is
+--------------------
+- A clean, from-scratch PyTorch implementation of the SF-NFNet-F0 architecture,
+  written by reading the upstream TensorFlow source.
+- A conversion script that transfers the *pretrained* weights from the released
+  Keras model (`model.keras`) into this PyTorch implementation. No retraining is
+  performed; the network is numerically equivalent to the original.
+
+Licensing (see LICENSE and LICENSE.weights)
+-------------------------------------------
+- The CODE in this repository is licensed under the GNU GPL v3.0, matching the
+  license of the upstream `mule` Python module from which the architecture was
+  derived.
+- The converted WEIGHTS (`model.safetensors`) are a derivative of the upstream
+  MULE weights, which Pandora/SiriusXM released under CC BY-NC 4.0. The converted
+  weights therefore inherit the CC BY-NC 4.0 (non-commercial) restriction.
+
+If you use this work, please cite the original paper above.

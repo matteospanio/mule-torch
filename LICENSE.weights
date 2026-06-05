@@ -1,0 +1,25 @@
+License for the converted MULE weights (model.safetensors)
+==========================================================
+
+The pretrained weights distributed with / produced by this project are a
+direct numerical derivative of the original MULE model weights released by
+Pandora Media, LLC. / SiriusXM in:
+
+    https://github.com/PandoraMedia/music-audio-representations
+
+Those weights are licensed under the Creative Commons
+Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0).
+
+Because the converted weights are a derivative work, they inherit the same
+license. You may share and adapt them for NON-COMMERCIAL purposes, with
+attribution. You may NOT use them for commercial purposes.
+
+Full license text: https://creativecommons.org/licenses/by-nc/4.0/legalcode
+
+Attribution:
+    "Supervised and Unsupervised Learning of Audio Representations for Music
+    Understanding", M. C. McCallum, F. Korzeniowski, S. Oramas, F. Gouyon,
+    A. F. Ehmann. ISMIR 2022.
+
+This license applies ONLY to the weights. The source code in this repository
+is licensed under GPL-3.0-only (see LICENSE).

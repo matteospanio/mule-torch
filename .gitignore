@@ -1,0 +1,31 @@
+# Vendored upstream reference (TF implementation + paper) — used for conversion
+# and verification only, not part of this package.
+references/
+
+# Python / build
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+
+# Virtual envs (the two uv venvs used for convert/runtime live here)
+.venv/
+.venv-*/
+
+# Converted weights + reference dumps (large; distributed out-of-band)
+artifacts/
+*.keras
+*.safetensors
+*.npy
+*.npz
+
+# Audio fixtures over a trivial size
+tests/fixtures/*.wav
+!tests/fixtures/.gitkeep
+
+# OS / editor
+.DS_Store
+*.log

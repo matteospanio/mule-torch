@@ -1,0 +1,61 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mule-torch"
+version = "0.1.0"
+description = "A faithful PyTorch port of MULE (SF-NFNet-F0), the SiriusXM/Pandora music-audio embedding model."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "GPL-3.0-only" }
+authors = [{ name = "matteospanio" }]
+keywords = ["mule", "music", "audio", "embeddings", "nfnet", "pytorch", "representation-learning"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Topic :: Multimedia :: Sound/Audio :: Analysis",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "torch>=2.1",
+    "numpy>=1.23",
+    "safetensors>=0.4",
+    "huggingface-hub>=0.20",
+]
+
+[project.optional-dependencies]
+# Only needed to (re)build the mel filterbank or run frontend exactness tests.
+frontend = ["librosa>=0.10"]
+# Only needed to run the one-time TF -> torch weight conversion. Requires Python <=3.11.
+convert = [
+    "tensorflow==2.13.1",
+    "scooch>=1.0.4",
+    "librosa==0.9.2",
+    "click==8.1.7",
+]
+dev = [
+    "pytest>=7",
+    "librosa>=0.10",
+    "onnx>=1.15",
+    "onnxruntime>=1.17",
+    "onnxscript>=0.1",
+    "soundfile>=0.12",
+]
+
+[project.urls]
+"Upstream (original TF)" = "https://github.com/PandoraMedia/music-audio-representations"
+"Paper" = "https://arxiv.org/abs/2210.03799"
+
+[project.scripts]
+mule-torch-convert = "mule_torch.scripts_entry:convert_main"
+mule-torch-verify = "mule_torch.scripts_entry:verify_main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mule_torch"]
+
+[tool.pytest.ini_options]
+markers = [
+    "requires_weights: test needs converted safetensors weights (set MULE_TORCH_WEIGHTS).",
+    "requires_tf_ref: test needs reference numpy dumps from the original TF pipeline (set MULE_TF_REF).",
+]
+testpaths = ["tests"]
