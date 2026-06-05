@@ -60,24 +60,30 @@ references/       vendored upstream TF repo + paper (gitignored; conversion only
 Two environments are needed because TensorFlow 2.13 requires Python ≤ 3.11 and is
 *not* a runtime dependency of this package.
 
+Conversion is decoupled into a TF phase (extract → numpy `.npz`) and a torch
+phase (assemble → safetensors), so TensorFlow and torch never share a venv.
+
 ```bash
 # 0) get the 251 MB Keras weights
 cd references/music-audio-representations && git lfs pull && cd -
 
-# 1) conversion + reference dumps  (TF venv, Python 3.10)
+REF=references/music-audio-representations
+
+# 1a) EXTRACT + reference dumps  (TF venv, Python 3.10)
 uv venv --python 3.10 .venv-convert
 uv pip install --python .venv-convert -e ".[convert]"
-.venv-convert/bin/python scripts/convert.py \
-    --keras references/music-audio-representations/supporting_data/model/model.keras \
-    --references references/music-audio-representations --out artifacts
+.venv-convert/bin/python scripts/convert.py extract \
+    --keras $REF/supporting_data/model/model.keras --references $REF --out artifacts/weights.npz
 .venv-convert/bin/python scripts/verify.py reference \
-    --references references/music-audio-representations \
-    --config references/music-audio-representations/supporting_data/configs/mule_embedding_timeline.yml \
+    --references $REF --config $REF/supporting_data/configs/mule_embedding_timeline.yml \
     --wav tests/fixtures/fixture.wav --out artifacts/ref
 
-# 2) torch-side parity + ONNX  (runtime venv, Python 3.12 + CUDA)
+# 1b) ASSEMBLE  (torch venv, Python 3.12 + CUDA)
 uv venv --python 3.12 .venv
 uv pip install --python .venv -e ".[dev]"
+.venv/bin/python scripts/convert.py assemble --npz artifacts/weights.npz --out artifacts
+
+# 2) torch-side parity + ONNX
 .venv/bin/python scripts/verify.py compare --ref artifacts/ref --weights artifacts --onnx
 
 # 3) full test suite (parity tests need the env vars below)

@@ -78,9 +78,11 @@ class ScaledActivation(nn.Module):
 class WSConv2d(nn.Module):
     """Weight-standardized 2D convolution (no bias), matching the TF wrapper.
 
-    Stores the raw kernel ``weight`` shaped ``(out, in/groups, kH, kW)`` and a
-    per-output-channel ``gain``. At ``forward`` the standardized kernel is
-    recomputed exactly as ``WeightStandardization._compute_weights``::
+    Stores the raw kernel ``weight`` shaped ``(out, in/groups, kH, kW)``, a
+    per-output-channel ``gain``, and a ``bias`` (the wrapped ``Conv2D`` in the
+    upstream code keeps Keras' default ``use_bias=True``; the bias is added
+    *after* the standardized convolution). At ``forward`` the standardized
+    kernel is recomputed exactly as ``WeightStandardization._compute_weights``::
 
         mean = reduce_mean(v, axis=(0,1,2))           # over (kH,kW,in/g)
         var  = reduce_variance(v, axis=(0,1,2))       # population variance
@@ -120,12 +122,13 @@ class WSConv2d(nn.Module):
         kh, kw = kernel
         weight = torch.empty(out_channels, in_channels // groups, kh, kw)
         nn.init.kaiming_normal_(weight)
+        self.weight = nn.Parameter(weight)
+        # Wrapped Conv2D keeps Keras' default use_bias=True (init zeros).
+        self.bias = nn.Parameter(torch.zeros(out_channels))
         if bake:
             # Inference-only: the standardized kernel is the parameter.
-            self.weight = nn.Parameter(weight)
             self.register_parameter("gain", None)
         else:
-            self.weight = nn.Parameter(weight)
             self.gain = nn.Parameter(torch.ones(out_channels))
 
     def standardized_weight(self) -> Tensor:
@@ -141,7 +144,7 @@ class WSConv2d(nn.Module):
     def forward(self, x: Tensor) -> Tensor:
         w = self.standardized_weight()
         x = self.pad(x)
-        return F.conv2d(x, w, bias=None, stride=self.stride, padding=0, groups=self.groups)
+        return F.conv2d(x, w, bias=self.bias, stride=self.stride, padding=0, groups=self.groups)
 
 
 class SqueezeExcite(nn.Module):
