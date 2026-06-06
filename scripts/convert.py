@@ -1,26 +1,39 @@
-#!/usr/bin/env python
-"""Convert the original MULE Keras model to mule-torch weights, in two phases.
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.10,<3.12"
+# dependencies = [
+#   "tensorflow==2.13.1",
+#   "scooch>=1.0.4",
+#   "librosa==0.9.2",
+#   "setuptools<81",
+#   "numpy<1.25",
+#   "torch>=2.1",
+#   "safetensors>=0.4",
+# ]
+# ///
+"""Convert the original MULE Keras model to mule-torch weights.
 
-TensorFlow and torch are decoupled into separate venvs (tf2.13 + torch + librosa
-in one env is a dependency-resolution minefield), with a numpy ``.npz`` as the
-interchange:
+This is a STANDALONE tool, not part of the `mule_torch` package: it carries its
+own dependencies (TensorFlow for reading the Keras model, torch for assembling
+the safetensors) via the PEP 723 block above, so just run it with uv:
 
-  # Phase 1 — EXTRACT  (TF venv, Python <=3.11): keras -> weights.npz
-  python scripts/convert.py extract \
+  # Phase 1 — EXTRACT: model.keras -> weights.npz  (uses TensorFlow + librosa)
+  uv run scripts/convert.py extract \
       --keras references/.../supporting_data/model/model.keras \
       --references references/music-audio-representations \
       --out artifacts/weights.npz
 
-  # Phase 2 — ASSEMBLE (torch venv): weights.npz -> model.safetensors + config.json
-  python scripts/convert.py assemble --npz artifacts/weights.npz --out artifacts
+  # Phase 2 — ASSEMBLE: weights.npz -> model.safetensors + config.json  (uses torch)
+  uv run scripts/convert.py assemble --npz artifacts/weights.npz --out artifacts
 
-The extract phase also bundles the *librosa 0.9.2* mel filterbank and a fixed
-random-input keras output, so assemble can build a bit-matching frontend and run
-an immediate parity smoke test without importing TensorFlow.
+Two phases share one uv environment but never import TF and torch together: the
+numpy ``.npz`` is the interchange. The extract phase bundles the *librosa 0.9.2*
+mel filterbank and a fixed random-input keras output, so assemble can build a
+bit-matching frontend and run an immediate parity smoke test.
 
-Mapping is by per-type execution order with shape assertions at every step (the
-safety net for layer-ordering / grouped-conv surprises); verified numerically by
-scripts/verify.py.
+Mapping is by per-type creation order with shape assertions at every step, and
+skip-init gains are mapped via graph connectivity (the safety nets for
+layer-ordering / grouped-conv surprises); verified numerically by verify.py.
 """
 
 from __future__ import annotations
@@ -30,6 +43,9 @@ import sys
 from pathlib import Path
 
 import numpy as np
+
+# Import the local mule_torch package from src/ without installing it.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 
 # ===================== Phase 1: EXTRACT (TensorFlow) ======================= #

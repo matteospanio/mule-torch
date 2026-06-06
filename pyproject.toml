@@ -5,17 +5,24 @@ build-backend = "hatchling.build"
 [project]
 name = "mule-torch"
 version = "0.1.0"
-description = "A faithful PyTorch port of MULE (SF-NFNet-F0), the SiriusXM/Pandora music-audio embedding model."
+description = "Unofficial PyTorch port of MULE (SF-NFNet-F0), the SiriusXM/Pandora music-audio embedding model."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "GPL-3.0-only" }
-authors = [{ name = "matteospanio" }]
+authors = [{ name = "Matteo Spanio", email = "spanio@dei.unipd.it" }]
 keywords = ["mule", "music", "audio", "embeddings", "nfnet", "pytorch", "representation-learning"]
 classifiers = [
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Multimedia :: Sound/Audio :: Analysis",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
+# Runtime dependencies are torch-only: this is a clean inference library. Everything
+# needed to *convert* weights from the original TF model or to *verify* parity lives
+# in the standalone uv scripts under scripts/ (run with `uv run`), not here.
 dependencies = [
     "torch>=2.1",
     "numpy>=1.23",
@@ -24,31 +31,20 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Only needed to (re)build the mel filterbank or run frontend exactness tests.
-frontend = ["librosa>=0.10"]
-# Only needed to run the one-time TF -> torch weight conversion. Requires Python <=3.11.
-convert = [
-    "tensorflow==2.13.1",
-    "scooch>=1.0.4",
-    "librosa==0.9.2",
-    "click==8.1.7",
-]
+# For running the test suite (mel-vs-librosa exactness + ONNX export checks).
 dev = [
     "pytest>=7",
     "librosa>=0.10",
     "onnx>=1.15",
     "onnxruntime>=1.17",
     "onnxscript>=0.1",
-    "soundfile>=0.12",
 ]
 
 [project.urls]
+Homepage = "https://github.com/matteospanio/mule-torch"
+Repository = "https://github.com/matteospanio/mule-torch"
 "Upstream (original TF)" = "https://github.com/PandoraMedia/music-audio-representations"
-"Paper" = "https://arxiv.org/abs/2210.03799"
-
-[project.scripts]
-mule-torch-convert = "mule_torch.scripts_entry:convert_main"
-mule-torch-verify = "mule_torch.scripts_entry:verify_main"
+Paper = "https://arxiv.org/abs/2210.03799"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/mule_torch"]

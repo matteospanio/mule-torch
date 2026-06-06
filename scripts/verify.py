@@ -1,18 +1,33 @@
-#!/usr/bin/env python
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.10,<3.12"
+# dependencies = [
+#   "tensorflow==2.13.1",
+#   "scooch>=1.0.4",
+#   "librosa==0.9.2",
+#   "setuptools<81",
+#   "soundfile>=0.12",
+#   "numpy<1.25",
+#   "torch>=2.1",
+#   "safetensors>=0.4",
+#   "onnx>=1.15",
+#   "onnxruntime>=1.17",
+# ]
+# ///
 """Numerically verify the mule-torch port against the original TF MULE pipeline.
 
-Two phases, because TensorFlow and torch live in separate venvs:
+This is a STANDALONE tool, not part of the `mule_torch` package; it carries its
+own dependencies via the PEP 723 block above. Run with uv:
 
-  # Phase A — in the [convert] venv (TF 2.13). Dumps ground-truth arrays.
-  python scripts/verify.py reference \
+  # Phase A — REFERENCE: run the genuine TF pipeline, dump ground-truth arrays.
+  uv run scripts/verify.py reference \
       --references references/music-audio-representations \
       --config references/music-audio-representations/supporting_data/configs/mule_embedding_timeline.yml \
       --wav tests/fixtures/fixture.wav --out artifacts/ref
 
-  # Phase B — in the runtime venv (torch). Loads the dumps + converted weights,
-  # runs the torch port, asserts parity, and checks ONNX export.
-  python scripts/verify.py compare \
-      --ref artifacts/ref --weights artifacts --onnx
+  # Phase B — COMPARE: load the dumps + converted weights, run the torch port,
+  # assert parity, and check ONNX export.
+  uv run scripts/verify.py compare --ref artifacts/ref --weights artifacts --onnx
 
 The reference phase dumps: waveform_16k.npy, mel.npy (96,T), slices.npy
 (N,96,300,1), slice_emb.npy (N,1728), timeline.npy (1728,K).
@@ -26,6 +41,9 @@ import sys
 from pathlib import Path
 
 import numpy as np
+
+# Import the local mule_torch package from src/ without installing it.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 
 def _gen_fixture(path: Path, seconds: float = 6.0, sr: int = 16000) -> None:
