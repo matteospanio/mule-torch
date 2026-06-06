@@ -13,5 +13,5 @@ from mule_torch.backbone import SfNfNetF0
 from mule_torch.config import MuleConfig
 from mule_torch.model import MuleModel
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __all__ = ["MuleModel", "SfNfNetF0", "MuleConfig", "__version__"]

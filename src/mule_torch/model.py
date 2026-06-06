@@ -47,15 +47,25 @@ class MuleModel(nn.Module):
         return self.config.sample_rate
 
     def embed_timeline(self, waveform: Tensor) -> list[Tensor]:
-        """Per-clip timeline of slice embeddings: list of ``(N_b, 1728)`` tensors."""
+        """Per-clip timeline of slice embeddings: list of ``(N_b, 1728)`` tensors.
+
+        Every clip's slices are concatenated and pushed through the backbone in
+        a *single* batched call, then split back per clip. SF-NFNet-F0 is
+        normalizer-free (no BatchNorm and no batch-dim reductions), so each
+        slice is processed independently — batching across clips is numerically
+        identical to one call per clip, but keeps the GPU busy instead of
+        issuing ``B`` small calls. Peak activation memory scales with the total
+        slice count (``~B * slices_per_clip``); lower the waveform batch if it
+        does not fit.
+        """
         if waveform.dim() == 1:
             waveform = waveform.unsqueeze(0)
         mels = self.frontend(waveform)  # (B, n_mels, frames)
-        out: list[Tensor] = []
-        for b in range(mels.shape[0]):
-            slices = slice_mel(mels[b], self.config)  # (N, 1, n_mels, width)
-            out.append(self.backbone(slices))         # (N, 1728)
-        return out
+        per_clip = [slice_mel(mels[b], self.config) for b in range(mels.shape[0])]
+        counts = [s.shape[0] for s in per_clip]  # slice_mel guarantees each >= 1
+        flat = torch.cat(per_clip, dim=0)        # (sum(counts), 1, n_mels, width)
+        emb = self.backbone(flat)                # (sum(counts), 1728) -- one call
+        return list(torch.split(emb, counts, dim=0))
 
     def forward(self, waveform: Tensor) -> Tensor:
         """``(B, T)`` waveform @ 16 kHz -> ``(B, 1728)`` mean-pooled clip embedding."""
