@@ -1,9 +1,10 @@
 """``MuleModel`` — the full waveform -> 1728-d embedding pipeline.
 
-This is the public entry point the parent project's encoder seam expects::
+This is the public entry point::
 
     from mule_torch import MuleModel
-    model = MuleModel.from_pretrained(model_dir="...")   # or hf_repo="csc-unipd/mule-torch"
+    model = MuleModel.from_pretrained()                  # pulls weights from the Hugging Face Hub
+    # or pin a local copy: MuleModel.from_pretrained(model_dir="...")
     emb = model(waveform)   # (B, T) @ 16 kHz  ->  (B, 1728)
 
 ``forward`` runs, per clip: mel front-end -> 96x300 slices every ~2 s ->
@@ -21,6 +22,10 @@ from mule_torch._weights import load_config_and_state
 from mule_torch.backbone import SfNfNetF0
 from mule_torch.config import MuleConfig
 from mule_torch.frontend import MuleMelSpectrogram, slice_mel
+
+# Default Hugging Face repo holding the converted weights (model.safetensors +
+# config.json). Used by from_pretrained() when no local model_dir is given.
+DEFAULT_HF_REPO = "matteospanio/mule"
 
 
 class MuleModel(nn.Module):
@@ -63,12 +68,15 @@ class MuleModel(nn.Module):
     @classmethod
     def from_pretrained(
         cls,
-        hf_repo: str | None = None,
+        hf_repo: str | None = DEFAULT_HF_REPO,
         revision: str | None = None,
         model_dir: str | os.PathLike | None = None,
         map_location: str | torch.device = "cpu",
         strict: bool = True,
     ) -> "MuleModel":
+        """Load MULE weights. By default downloads from the Hugging Face Hub
+        (``matteospanio/mule``); pass ``model_dir`` (or set ``$MULE_TORCH_DIR``)
+        to load a local copy instead, or ``hf_repo`` to use a different repo."""
         cfg_dict, state = load_config_and_state(hf_repo=hf_repo, revision=revision, model_dir=model_dir)
         cfg = MuleConfig.from_dict(cfg_dict)
         # The mel filterbank is stored in the state dict; build the model with it

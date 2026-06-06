@@ -4,6 +4,7 @@
 [![Weights: CC BY-NC 4.0](https://img.shields.io/badge/Weights-CC%20BY--NC%204.0-lightgrey.svg)](LICENSE.weights)
 [![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue.svg)](pyproject.toml)
 [![PyTorch](https://img.shields.io/badge/PyTorch-%E2%89%A5%202.1-ee4c2c.svg)](https://pytorch.org/)
+[![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-matteospanio%2Fmule-yellow)](https://huggingface.co/matteospanio/mule)
 [![Status](https://img.shields.io/badge/status-unofficial%20port-orange.svg)](#disclaimer)
 
 An **unofficial PyTorch port** of MULE (Musicset Unsupervised Large Embedding), the
@@ -43,14 +44,31 @@ conversion/verification tooling lives in standalone `uv` scripts (see below).
 ```python
 from mule_torch import MuleModel
 
-model = MuleModel.from_pretrained(model_dir="artifacts")   # or hf_repo="..."
-emb = model(waveform)        # waveform: (B, T) float @ 16 kHz mono -> (B, 1728)
+model = MuleModel.from_pretrained()      # downloads weights from the Hugging Face Hub
+emb = model(waveform)                    # waveform: (B, T) float @ 16 kHz mono -> (B, 1728)
 ```
 
 Input is a 16 kHz mono waveform in `[-1, 1]`. The model computes a 96-band
 log-mel spectrogram, slices it into 96×300 windows every ~2 s, runs the
 SF-NFNet-F0 backbone, and mean-pools the per-slice 1728-d embeddings into one
 vector per clip — matching `mule_embedding_timeline.yml` + a timeline average.
+
+### Pretrained weights
+
+The converted weights are hosted on the Hugging Face Hub at
+**[`matteospanio/mule`](https://huggingface.co/matteospanio/mule)** (CC BY-NC 4.0)
+and are downloaded automatically by `from_pretrained()`:
+
+```python
+MuleModel.from_pretrained()                          # default: hf_repo="matteospanio/mule"
+MuleModel.from_pretrained(hf_repo="matteospanio/mule", revision="main")
+MuleModel.from_pretrained(model_dir="artifacts")     # or load a local copy (skip the download)
+```
+
+The Hub repo ships `model.safetensors` + `config.json` (used here) and a
+self-contained `backbone.onnx` (opset 17, `(N,1,96,300)` log-mel slice →
+`(N,1728)`, dynamic batch) for ONNX Runtime. Set `$MULE_TORCH_DIR` to point
+`from_pretrained()` at a local directory without passing `model_dir`.
 
 ## How the port works
 
@@ -71,15 +89,6 @@ is a no-op at inference (`shortcut + residual`) and is dropped.
 > original closely but are not bit-identical because the `log10(10000·x+1)` mel
 > compression is non-linear. The verification below feeds the *exact* waveform
 > the reference used, so parity is exact.
-
-## Layout
-
-```
-src/mule_torch/   config.py layers.py blocks.py backbone.py frontend.py model.py   # the library
-scripts/          convert.py  verify.py   # standalone uv tools (NOT part of the package)
-tests/            frontend / shapes / layers / onnx (no weights)  + parity (gated)
-references/       vendored upstream TF repo + paper (gitignored; conversion only)
-```
 
 ## Converting + verifying the weights
 
