@@ -1,8 +1,9 @@
 # mule-torch
 
+[![PyPI](https://img.shields.io/pypi/v/mule-torch.svg)](https://pypi.org/project/mule-torch/)
 [![License: GPLv3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Weights: CC BY-NC 4.0](https://img.shields.io/badge/Weights-CC%20BY--NC%204.0-lightgrey.svg)](LICENSE.weights)
-[![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue.svg)](pyproject.toml)
+[![Python](https://img.shields.io/pypi/pyversions/mule-torch.svg)](https://pypi.org/project/mule-torch/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-%E2%89%A5%202.1-ee4c2c.svg)](https://pytorch.org/)
 [![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-matteospanio%2Fmule-yellow)](https://huggingface.co/matteospanio/mule)
 [![Status](https://img.shields.io/badge/status-unofficial%20port-orange.svg)](#disclaimer)
@@ -30,8 +31,8 @@ which the original TensorFlow/SCOOCH/`Analysis` pipeline supports.
 ## Install
 
 ```bash
-pip install mule-torch                                  # once published to PyPI
-# or, from source:
+pip install mule-torch
+# or, latest from source:
 pip install git+https://github.com/matteospanio/mule-torch
 ```
 
